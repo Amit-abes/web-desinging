@@ -1,0 +1,139 @@
+!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Breathing Box Widget</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f4f8; /* Soft grey-blue background */
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #555;
+        }
+
+        h2 {
+            margin-bottom: 10px;
+            font-weight: 300;
+        }
+
+        .canvas-container {
+            position: relative;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            border-radius: 12px;
+            overflow: hidden;
+            background: white;
+        }
+
+        canvas {
+            display: block;
+        }
+
+        .controls {
+            margin-top: 20px;
+            text-align: center;
+            width: 300px;
+        }
+
+        input[type=range] {
+            width: 100%;
+            cursor: pointer;
+        }
+
+        .speed-label {
+            font-size: 0.9rem;
+            margin-top: 5px;
+            color: #888;
+        }
+    </style>
+</head>
+<body>
+
+    <h2>Relaxation Widget</h2>
+
+    <div class="canvas-container">
+        <canvas id="breatheCanvas" width="400" height="400"></canvas>
+    </div>
+
+    <div class="controls">
+        <label for="speedSlider">Breath Speed</label>
+        <input type="range" id="speedSlider" min="1" max="10" value="5">
+        <div class="speed-label">Adjust to match your rhythm</div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('breatheCanvas');
+        const ctx = canvas.getContext('2d');
+        const slider = document.getElementById('speedSlider');
+
+        // Configuration
+        const centerX = canvas.width / 2;
+        const centerY = canvas.height / 2;
+        const minSize = 100; // Smallest square size (px)
+        const maxSize = 250; // Largest square size (px)
+        
+        // Animation Variables
+        let angle = -Math.PI / 2; // Start at the bottom of the sine wave (smallest size)
+        let baseSpeed = 0.03; // Corresponds roughly to a 4-second cycle at middle slider setting
+
+        function draw() {
+            // 1. Clear the Canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // 2. Calculate Size using Sine Wave
+            // The sine wave oscillates between -1 and 1. We map this to our minSize and maxSize.
+            const sineValue = Math.sin(angle); 
+            // Normalize sine (-1 to 1) to (0 to 1)
+            const normalizedFactor = (sineValue + 1) / 2; 
+            
+            const currentSize = minSize + (normalizedFactor * (maxSize - minSize));
+            const halfSize = currentSize / 2;
+
+            // 3. Determine "Breathe In" vs "Breathe Out"
+            // We use the cosine (derivative of sine) to determine direction.
+            // Positive cosine means Sine is increasing (Inhale).
+            // Negative cosine means Sine is decreasing (Exhale).
+            const isInhaling = Math.cos(angle) > 0;
+            
+            // 4. Style the Box (Soft Blue)
+            // We adjust opacity slightly based on size for a "glowing" effect
+            const alpha = 0.6 + (normalizedFactor * 0.4); 
+            ctx.fillStyle = rgba(100, 180, 255, ${alpha});
+            ctx.shadowBlur = 20;
+            ctx.shadowColor = "rgba(100, 180, 255, 0.5)";
+
+            // Draw Rounded Rectangle (Box)
+            ctx.beginPath();
+            ctx.roundRect(centerX - halfSize, centerY - halfSize, currentSize, currentSize, 20);
+            ctx.fill();
+
+            // 5. Draw the Text
+            ctx.shadowBlur = 0; // Remove shadow for text clarity
+            ctx.fillStyle = "white";
+            ctx.font = "bold 24px sans-serif";
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+
+            const text = isInhaling ? "Breathe In..." : "Breathe Out...";
+            ctx.fillText(text, centerX, centerY);
+
+            // 6. Update Angle for next frame
+            // Slider value 1-10 modifies the speed multiplier
+            const sliderFactor = slider.value / 5; 
+            angle += baseSpeed * sliderFactor;
+
+            // Loop
+            requestAnimationFrame(draw);
+        }
+
+        // Start animation
+        draw();
+
+    </script>
+</body>
+</html>
